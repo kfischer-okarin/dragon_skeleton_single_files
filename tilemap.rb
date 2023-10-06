@@ -1,17 +1,17 @@
 # MIT License
-# 
+#
 # Copyright (c) 2023 Kevin Fischer
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -43,6 +43,7 @@ class Tilemap
   attr_reader :grid_w
   # The height of the tilemap in cells
   attr_reader :grid_h
+
   # Creates a new tilemap.
   #
   # You can optionally pass a tileset to use for the tilemap.
@@ -68,22 +69,27 @@ class Tilemap
     }
     @primitive = RenderedPrimitive.new(@cells, self)
   end
+
   # Returns the width of the tilemap in pixels.
   def w
     @grid_w * @cell_w
   end
+
   # Returns the height of the tilemap in pixels.
   def h
     @grid_h * @cell_h
   end
+
   # Returns the Cell at the given grid coordinates.
   def [](x, y)
     @cells[y * @grid_w + x]
   end
+
   # Renders the tilemap to the given outputs / render target.
   def render(outputs)
     outputs.primitives << @primitive
   end
+
   # Converts a position to grid coordinates.
   def to_grid_coordinates(position)
     {
@@ -91,6 +97,7 @@ class Tilemap
       y: (position.y - @y).idiv(@cell_h)
     }
   end
+
   # Returns the rectangle of the cell at the given grid coordinates.
   def cell_rect(grid_coordinates)
     {
@@ -100,14 +107,17 @@ class Tilemap
       h: @cell_h
     }
   end
+
   class RenderedPrimitive # :nodoc: Internal class responsible for rendering the tilemap.
     def initialize(cells, tilemap)
       @cells = cells
       @tilemap = tilemap
     end
+
     def primitive_marker
       :sprite
     end
+
     def draw_override(ffi_draw)
       origin_x = @tilemap.x
       origin_y = @tilemap.y
@@ -116,6 +126,7 @@ class Tilemap
       cell_count = @cells.size
       cells = @cells
       index = 0
+
       while index < cell_count
         x, y, path, r, g, b, a, tile_x, tile_y, tile_w, tile_h = cells[index]
         ffi_draw.draw_sprite_4 origin_x + x, origin_y + y, w, h,
@@ -127,6 +138,7 @@ class Tilemap
                                nil, nil, # angle_anchor_x, angle_anchor_y
                                nil, nil, nil, nil, # source_x, source_y, source_w, source_h
                                nil # blendmode_enum
+
         index += 1
       end
     end
@@ -163,26 +175,34 @@ class Tilemap
         define_method("#{name}=") { |value| self[index] = value }
       end
     end
+
     # Returns the index of the given property.
     def self.property_index(name)
       @property_indexes[name]
     end
+
     index_accessors :x, :y, :path, :r, :g, :b, :a, :tile_x, :tile_y, :tile_w, :tile_h, :tile
+
     undef_method :x=
     undef_method :y=
+
     def initialize(x, y, tileset: nil) # :nodoc: The user should not create cells directly.
       super(12)
+
       self[0] = x
       self[1] = y
       return unless tileset
+
       assign(tileset.default_tile)
       tile_index = Cell.property_index(:tile)
       define_singleton_method(:tile=) do |tile|
         return unless self[tile_index] != tile
+
         assign(tileset[tile])
         self[tile_index] = tile
       end
     end
+
     # Assigns the given values to the cell.
     #
     # Example:
@@ -192,8 +212,10 @@ class Tilemap
       values.each do |name, value|
         index = Cell.property_index(name)
         next unless index
+
         self[index] = value
       end
     end
   end
 end
+

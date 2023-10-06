@@ -1,17 +1,17 @@
 # MIT License
-# 
+#
 # Copyright (c) 2023 Kevin Fischer
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -56,6 +56,7 @@ module LongCalculation
       fiber.extend LongCalculationFiber
       fiber
     end
+
     # Call this inside a long calculation to signify that one step of the calculation
     # has finished.
     #
@@ -63,8 +64,10 @@ module LongCalculation
     # LongCalculationFiber#resume method is called on the calculation.
     def finish_step
       return unless inside_calculation?
+
       Fiber.yield
     end
+
     # Returns +true+ if the current code is running inside a long calculation.
     def inside_calculation?
       Fiber.current.respond_to? :result
@@ -77,6 +80,7 @@ module LongCalculation
   module LongCalculationFiber
     def self.extend_object(object) # :nodoc:
       raise ArgumentError, "Fiber expected, got #{object.class}" unless object.is_a? Fiber
+
       state = {}
       object.define_singleton_method :result do
         state[:result]
@@ -86,18 +90,22 @@ module LongCalculation
       end
       super
     end
+
     # Runs the next step of the calculation.
     def resume
       super unless finished?
     end
+
     # Returns +true+ if the calculation has finished.
     def finished?
       !result.nil?
     end
+
     # Runs the calculation until it finishes.
     def finish
       resume until finished?
     end
+
     # Runs the calculation until it finishes or the given amount of milliseconds has passed.
     #
     # This is useful for spreading the calculation over multiple ticks.
@@ -105,8 +113,10 @@ module LongCalculation
       start_time = Time.now.to_f
       resume until finished? || (Time.now.to_f - start_time) * 1000 >= milliseconds
     end
+
     ##
     # :attr_accessor: result
     # The result of the calculation or +nil+ if the calculation has not finished yet.
   end
 end
+

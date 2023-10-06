@@ -1,17 +1,17 @@
 # MIT License
-# 
+#
 # Copyright (c) 2023 Kevin Fischer
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -60,17 +60,21 @@ module Screen
         scale: scale
       )
     end
+
     # Creates a render target used to render to the given screen.
     def build_render_target(args, screen)
       result = args.outputs[:screen]
       result.width = screen[:x_resolution]
       result.height = screen[:y_resolution]
+      result.transient!
       result
     end
+
     # Creates a sprite that is used to draw the given screen to the display.
     def sprite(screen)
       screen.slice(:x, :y, :w, :h).sprite!(path: :screen)
     end
+
     # Converts a display position to coordinates on the given screen.
     def to_screen_position(screen, position)
       {
@@ -78,6 +82,7 @@ module Screen
         y: (position.y - screen[:y]).idiv(screen[:scale])
       }
     end
+
     # Returns the rectangle on the display where the pixel at the given screen
     # position is drawn.
     def pixel_rect(screen, screen_position)
@@ -89,6 +94,7 @@ module Screen
       }
     end
   end
+
   # 64x64
   LOWREZJAM = with_resolution(64, 64)
   # 84x48
@@ -98,3 +104,4 @@ module Screen
   # 320x180
   GBA_STYLE = with_resolution(320, 180)
 end
+
