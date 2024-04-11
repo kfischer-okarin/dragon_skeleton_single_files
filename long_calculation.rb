@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2023 Kevin Fischer
+# Copyright (c) 2023-2024 Kevin Fischer
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -64,7 +64,9 @@ module LongCalculation
     # LongCalculationFiber#resume method is called on the calculation.
     def finish_step
       return unless inside_calculation?
+      return unless Fiber.current.yield_strategy.should_yield?
 
+      Fiber.current.yield_strategy = nil
       Fiber.yield
     end
 
@@ -88,12 +90,44 @@ module LongCalculation
       object.define_singleton_method :result= do |value|
         state[:result] = value
       end
+      object.define_singleton_method :yield_strategy do
+        state[:yield_strategy]
+      end
+      object.define_singleton_method :yield_strategy= do |value|
+        state[:yield_strategy] = value
+      end
       super
+    end
+
+    class AlwaysYieldStrategy
+      def self.should_yield?
+        true
+      end
+    end
+
+    class NeverYieldStrategy
+      def self.should_yield?
+        false
+      end
+    end
+
+    class YieldAfterDurationStrategy
+      def initialize(milliseconds)
+        @milliseconds = milliseconds
+        @start_time = Time.now.to_f
+      end
+
+      def should_yield?
+        (Time.now.to_f - @start_time) * 1000 >= @milliseconds
+      end
     end
 
     # Runs the next step of the calculation.
     def resume
-      super unless finished?
+      return if finished?
+
+      self.yield_strategy ||= AlwaysYieldStrategy
+      super
     end
 
     # Returns +true+ if the calculation has finished.
@@ -103,15 +137,16 @@ module LongCalculation
 
     # Runs the calculation until it finishes.
     def finish
-      resume until finished?
+      self.yield_strategy = NeverYieldStrategy
+      resume
     end
 
     # Runs the calculation until it finishes or the given amount of milliseconds has passed.
     #
     # This is useful for spreading the calculation over multiple ticks.
     def run_for_ms(milliseconds)
-      start_time = Time.now.to_f
-      resume until finished? || (Time.now.to_f - start_time) * 1000 >= milliseconds
+      self.yield_strategy = YieldAfterDurationStrategy.new(milliseconds)
+      resume
     end
 
     ##

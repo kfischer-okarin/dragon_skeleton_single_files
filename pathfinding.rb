@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2023 Kevin Fischer
+# Copyright (c) 2023-2024 Kevin Fischer
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -103,6 +103,7 @@ module Pathfinding
           cost_so_far[neighbor] = total_cost_to_neighbor
         end
       end
+      return [] unless came_from.key? goal
 
       result = []
       current = goal
